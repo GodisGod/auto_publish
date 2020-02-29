@@ -1,0 +1,36 @@
+<idea-plugin>
+  <id>com.your.company.unique.plugin.id</id>
+  <name>Auto Publish</name>
+  <version>1.0</version>
+  <vendor email="963140097@qq.com" url="www.baidu.com">达达科技</vendor>
+
+  <description><![CDATA[
+      自动打包发布的插件,可以设置版本号版本名称渠道号,debug,release包.<br>
+    ]]></description>
+
+  <change-notes><![CDATA[
+      自动打包发布的插件,可以设置版本号版本名称渠道号,debug,release包 1.0.<br>
+    ]]>
+  </change-notes>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+  <idea-version since-build="173.0"/>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+    <action id="AutoPublish.action.AutoPublishAction" class="action.AutoPublishAction" text="AutoPublish"
+            description="auto publish apk">
+      <add-to-group group-id="WindowMenu" anchor="last"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="shift M"/>
+    </action>
+  </actions>
+
+</idea-plugin>

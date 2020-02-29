@@ -32,8 +32,9 @@ public class AutoPublishDialog {
 
     static JScrollBar scrollBar;
     private DefaultCaret defaultCaret;
-
+    private static AtomicBoolean execute = new AtomicBoolean();
     private boolean isExecute = false;
+    private long gradleKey;
 
     public JPanel getAuto_publish_panel() {
         return auto_publish_panel;
@@ -72,17 +73,12 @@ public class AutoPublishDialog {
         publishButton.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                switchStatus(isExecute);
-                if (isExecute) {
-                    GradleTools.instance().stopAll();
-                    isExecute = false;
-                    return;
-                }
-                if (debugRadioButton.isSelected()) {
-                    ExecuteResult result = GradleTools.instance().deploy(GradleTools.PUBLISH_TYPE.DEBUG, "app", "debug");
-                }
-                if (releaseRadioButton.isSelected()) {
-                    ExecuteResult result = GradleTools.instance().deploy(GradleTools.PUBLISH_TYPE.RELEASE, "app", "release");
+                if (!execute.get()) {
+                    publish("正式版本，日志测试");
+                } else {
+                    if (isExecute) {
+                        GradleTools.instance().stopGradle(gradleKey);
+                    }
                 }
             }
         });
@@ -123,19 +119,38 @@ public class AutoPublishDialog {
 
     }
 
+    public void publish(String log) {
+        switchStatus(true);
+        new Thread(() -> {
+            gradleKey = Thread.currentThread().getId();
+            System.out.println("LHD  当前发布线程的id = " + gradleKey);
+            ExecuteResult result = null;
+            if (debugRadioButton.isSelected()) {
+                result = GradleTools.instance().deploy(GradleTools.PUBLISH_TYPE.DEBUG, "app", log);
+            }
+            if (releaseRadioButton.isSelected()) {
+                result = GradleTools.instance().deploy(GradleTools.PUBLISH_TYPE.RELEASE, "app", log);
+            }
+            if (result == null) {
+                return;
+            }
+            if (result.isSuccess()) {
+                //发布成功去检查一下最新版本
+            }
+            switchStatus(false);
+        }).start();
+    }
+
+
     public void switchStatus(boolean deploying) {
         System.out.println("LHD --switchStatus--发布中止 id1 = " + Thread.currentThread().getId());
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                System.out.println("LHD --switchStatus--发布中止 id2 = " + Thread.currentThread().getId());
-                if (deploying) {
-                    publishButton.setText("中止");
-                } else {
-                    publishButton.setText("发布");
-                }
-            }
-        });
+        execute.getAndSet(deploying);
+        isExecute = deploying;
+        if (deploying) {
+            publishButton.setText("中止");
+        } else {
+            publishButton.setText("发布");
+        }
     }
 
     public void startPublish() {

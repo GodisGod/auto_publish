@@ -1,8 +1,14 @@
 package utils;
 
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
+import com.trilead.ssh2.StreamGobbler;
+import gui.AutoPublishDialog;
 import org.apache.http.util.TextUtils;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -87,7 +93,7 @@ public class GradleTools {
             return new ExecuteResult(1, "", "请填写版本日志");
         }
 //        logStr = String.format("[版本发布者:%s]\n\n%s", state.user, logStr);
-        log("[启动打包流程]...");
+        log("[启动打包流程]" + type + "...");
 
         //todo
         String clean = ":%s:clean";
@@ -96,16 +102,16 @@ public class GradleTools {
 
         //1、clean
         ExecuteResult executeResult = execute(String.format(clean, modelName));//首先clean
-        System.out.println("LHD -----clean------" + executeResult.isSuccess() + "---------LHD");
+//        System.out.println("LHD -----clean------" + executeResult.isSuccess() + "---------LHD");
         //2、debug,release.channel
         if (executeResult.isSuccess()) {//clean成功
             //打包apk
             if (type == PUBLISH_TYPE.DEBUG) {
                 executeResult = execute(String.format(assembleDebugAar, modelName));//然后打包aar
-                System.out.println("LHD -----DEBUG------" + executeResult.isSuccess() + "---------LHD");
+//                System.out.println("LHD -----DEBUG------" + executeResult.isSuccess() + "---------LHD");
             } else if (type == PUBLISH_TYPE.RELEASE) {
                 executeResult = execute(String.format(assembleReleaseAar, modelName));//然后打包aar
-                System.out.println("LHD -----RELEASE------" + executeResult.isSuccess() + "---------LHD");
+//                System.out.println("LHD -----RELEASE------" + executeResult.isSuccess() + "---------LHD");
             } else {
 
             }
@@ -156,17 +162,16 @@ public class GradleTools {
             if (isMac()) {
                 String cmds[] = new String[]{getCommand(), getC(), getCD() + getPlatformWithGradle() + command};
                 process = Runtime.getRuntime().exec(cmds);
-
             } else {
                 String cmd = getCommand() + " " + getC() + getCD() + getPlatformWithGradle() + command;
                 process = Runtime.getRuntime().exec(cmd);
-                System.out.println("LHD -- windows do command------getCommand = " + getCommand() +
-                        " getC() = " + getC() +
-                        " getCD() = " + getCD() +
-                        " getPlatformWithGradle() = " + getPlatformWithGradle() +
-                        " command= " + command +
-                        "--LHD");
-                System.out.println("LHD -----clean------ 最终命令 = " + cmd + "---------LHD");
+//                System.out.println("LHD -- windows do command------getCommand = " + getCommand() +
+//                        " getC() = " + getC() +
+//                        " getCD() = " + getCD() +
+//                        " getPlatformWithGradle() = " + getPlatformWithGradle() +
+//                        " command= " + command +
+//                        "--LHD");
+//                System.out.println("LHD -----clean------ 最终命令 = " + cmd + "---------LHD");
             }
             if (executeListener != null) {
 //                executeListener.onExecute("\nExecute Full Command \n: [" + cmd+ "]\n");
@@ -194,16 +199,14 @@ public class GradleTools {
             StringBuffer sb = new StringBuffer();
 
             LineNumberReader reader = new LineNumberReader(ir);
-            System.out.println("LHD -----readStream 读取线程输出 = executeListener = " + executeListener + "---------LHD");
+//            System.out.println("LHD -----readStream 读取线程输出 = executeListener = " + executeListener + "---------LHD");
             Thread execThread = new Thread() {
                 @Override
                 public void run() {
                     try {
-
                         String line;
                         while ((line = reader.readLine()) != null) {
                             if (executeListener != null) {
-                                System.out.println("LHD -----读取线程输出 = " + line + "---------LHD");
                                 executeListener.onExecute(line);
                             }
 
@@ -217,7 +220,7 @@ public class GradleTools {
                 }
             };
             execThread.start();
-            execThread.join();
+//            execThread.join();
 
             return sb.toString();
         } catch (Exception e) {
@@ -260,27 +263,33 @@ public class GradleTools {
     }
 
     public static void main(String[] args) {
+        int width = Toolkit.getDefaultToolkit().getScreenSize().width;
+        int height = Toolkit.getDefaultToolkit().getScreenSize().height;
+        int windowsWidth = 680;
+        int windowsHeight = 500;
+
         //D:\APPHELPER\MyApplication
         //E:\sina\FinanceAppAndroid\SinaFinance
         //C:\Users\96314\IntelliJIDEAProjects\MyApplication
         Constant.setProjectPath("C:/Users/96314/IntelliJIDEAProjects/MyApplication");
 
-        GradleTools.instance().setExecuteListener(new GradleTools.ExecuteListener() {
-            @Override
-            public void onExecuteStart() {
-            }
+        AutoPublishDialog autoPublishDialog = new AutoPublishDialog();
 
-            @Override
-            public void onExecute(String line) {
-                System.out.println("LHD -----line------" + line + "---------LHD");
-            }
+        autoPublishDialog.initView();
 
-            @Override
-            public void onExecuteEnd() {
-            }
-        });
+        JFrame frame = new JFrame("AutoPublishDialog");
+        frame.setContentPane(autoPublishDialog.getAuto_publish_panel());
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
 
-        ExecuteResult result = GradleTools.instance().deploy(PUBLISH_TYPE.DEBUG, "app", "测试");
+        frame.setResizable(false);
+        frame.setAlwaysOnTop(false);
+        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        frame.setBounds((width - windowsWidth) / 2,
+                (height - windowsHeight) / 2, windowsWidth, windowsHeight);
+
+//        ExecuteResult result = GradleTools.instance().deploy(PUBLISH_TYPE.RELEASE, "app", "测试");
 //        System.out.println("LHD -----a------" + result.getResult() + "---------LHD");
 //        System.out.println("LHD -----b------" + result.getMsg() + "---------LHD");
 //        System.out.println("LHD -----c------" + result.getErrorMsg() + "---------LHD");

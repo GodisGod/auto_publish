@@ -102,20 +102,23 @@
         <constraints>
           <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties/>
-        <border type="none"/>
+        <properties>
+          <autoscrolls value="true"/>
+          <horizontalScrollBarPolicy value="31"/>
+          <verticalScrollBarPolicy value="22"/>
+        </properties>
+        <border type="empty">
+          <size top="10" left="10" bottom="10" right="10"/>
+        </border>
         <children>
-          <grid id="30f4c" binding="areaJpane" layout-manager="BorderLayout" hgap="0" vgap="0">
+          <component id="1407d" class="javax.swing.JTextArea" binding="textArea1" default-binding="true">
             <constraints/>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="8e6ec" class="javax.swing.JTextArea" binding="textArea1" default-binding="true">
-                <constraints border-constraint="Center"/>
-                <properties/>
-              </component>
-            </children>
-          </grid>
+            <properties>
+              <editable value="false"/>
+              <lineWrap value="true"/>
+              <wrapStyleWord value="true"/>
+            </properties>
+          </component>
         </children>
       </scrollpane>
     </children>

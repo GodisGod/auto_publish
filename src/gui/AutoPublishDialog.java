@@ -8,9 +8,14 @@ import utils.GradleTools;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class AutoPublishDialog {
     private JTextField a496TextField;
@@ -23,10 +28,11 @@ public class AutoPublishDialog {
     private JPanel auto_publish_panel;
     private JButton logButton;
     private JScrollPane scrollPane;
-    private JPanel areaJpane;
     private JTextArea textArea1;
 
-    private static AtomicBoolean execute = new AtomicBoolean();
+    static JScrollBar scrollBar;
+    private DefaultCaret defaultCaret;
+
     private boolean isExecute = false;
 
     public JPanel getAuto_publish_panel() {
@@ -35,17 +41,17 @@ public class AutoPublishDialog {
 
     public void initView() {
 
-        areaJpane.setLayout(new VerticalLayout());
-        areaJpane.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         //不可编辑
         textArea1.setEditable(false);
         //自动换行
         textArea1.setLineWrap(true);
-        //断行不断字
+        //断行不会分割单词
         textArea1.setWrapStyleWord(true);
+        textArea1.setBorder(new EmptyBorder(5, 10, 10, 5));
 
         scrollPane.setViewportView(textArea1);
+        scrollBar = scrollPane.getVerticalScrollBar();
 
         ButtonGroup group = new ButtonGroup();
         group.add(debugRadioButton);
@@ -55,7 +61,6 @@ public class AutoPublishDialog {
         //设置默认选中debug
         group.setSelected(debugRadioButton.getModel(), true);
 
-        switchStatus(false);
         logButton.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -63,52 +68,74 @@ public class AutoPublishDialog {
             }
         });
 
+        switchStatus(false);
         publishButton.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                switchStatus(isExecute);
+                if (isExecute) {
+                    GradleTools.instance().stopAll();
+                    isExecute = false;
+                    return;
+                }
                 if (debugRadioButton.isSelected()) {
-                    ExecuteResult result = GradleTools.instance().deploy(GradleTools.PUBLISH_TYPE.DEBUG, "app", "测试");
+                    ExecuteResult result = GradleTools.instance().deploy(GradleTools.PUBLISH_TYPE.DEBUG, "app", "debug");
                 }
                 if (releaseRadioButton.isSelected()) {
-                    ExecuteResult result = GradleTools.instance().deploy(GradleTools.PUBLISH_TYPE.RELEASE, "app", "测试");
+                    ExecuteResult result = GradleTools.instance().deploy(GradleTools.PUBLISH_TYPE.RELEASE, "app", "release");
                 }
             }
         });
 
+        defaultCaret = (DefaultCaret) textArea1.getCaret();
         GradleTools.instance().setExecuteListener(new GradleTools.ExecuteListener() {
             @Override
             public void onExecuteStart() {
-                textArea1.setText("");
+                System.out.println("LHD -----onExecuteStart------当前线程id = " + Thread.currentThread().getId());
+                textArea1.setText("开始");
+                isExecute = true;
             }
 
             @Override
             public void onExecute(String line) {
+                System.out.println("LHD -----onExecute------当前线程id = " + Thread.currentThread().getId());
+//                System.out.println("LHD -----读取线程输出 = " + line + "---------LHD");
                 textArea1.append("\n");
                 textArea1.append(line);
                 textArea1.paintImmediately(textArea1.getBounds());
-                textArea1.paintImmediately(textArea1.getX(), textArea1.getY(), textArea1.getWidth(), textArea1.getHeight());
-                textArea1.setCaretPosition(textArea1.getDocument().getLength());
-                textArea1.invalidate();
-                textArea1.repaint();
+//                textArea1.paintImmediately(textArea1.getX(), textArea1.getY(), textArea1.getWidth(), textArea1.getHeight());
+//                textArea1.setCaretPosition(textArea1.getDocument().getLength());
+
+//                defaultCaret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+
+//                textArea1.requestFocus();
+
             }
 
             @Override
             public void onExecuteEnd() {
+                System.out.println("LHD -----onExecuteEnd------当前线程id = " + Thread.currentThread().getId());
                 textArea1.append("\n");
                 textArea1.append("执行结束");
+                isExecute = false;
             }
         });
 
     }
 
     public void switchStatus(boolean deploying) {
-        execute.getAndSet(deploying);
-        isExecute = deploying;
-        if (deploying) {
-            publishButton.setText("停止");
-        } else {
-            publishButton.setText("发布");
-        }
+        System.out.println("LHD --switchStatus--发布中止 id1 = " + Thread.currentThread().getId());
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("LHD --switchStatus--发布中止 id2 = " + Thread.currentThread().getId());
+                if (deploying) {
+                    publishButton.setText("中止");
+                } else {
+                    publishButton.setText("发布");
+                }
+            }
+        });
     }
 
     public void startPublish() {
@@ -132,5 +159,8 @@ public class AutoPublishDialog {
 
     }
 
+    private void checkBtnState(boolean isPublish) {
+        publishButton.setText(isPublish ? "中止" : "发布");
+    }
 
 }

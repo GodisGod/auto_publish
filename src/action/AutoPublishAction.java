@@ -20,7 +20,7 @@ public class AutoPublishAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
         // TODO: insert action logic here
         Constant.setProjectPath(e.getProject().getBasePath());
-        Messages.showMessageDialog("Auto Publish !路径 = " + e.getProject().getBasePath(), "Information:" + e.getProject().getBasePath(), Messages.getInformationIcon());
+//        Messages.showMessageDialog("Auto Publish !路径 = " + e.getProject().getBasePath(), "Information:" + e.getProject().getBasePath(), Messages.getInformationIcon());
 //        Messages.showMessageDialog("Auto Publish !", "Information", Messages.getInformationIcon());
         AutoPublishDialog autoPublishDialog = new AutoPublishDialog();
 
@@ -37,7 +37,7 @@ public class AutoPublishAction extends AnAction {
         frame.setVisible(true);
 
         frame.setResizable(false);
-        frame.setAlwaysOnTop(true);
+        frame.setAlwaysOnTop(false);
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setBounds((width - windowsWidth) / 2,
                 (height - windowsHeight) / 2, windowsWidth, windowsHeight);

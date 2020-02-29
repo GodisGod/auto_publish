@@ -29,6 +29,11 @@ public class GradleTools {
         return "./gradlew ";
     }
 
+    /**
+     * cmd /C  执行字符串指定的命令然后终止
+     *
+     * @return
+     */
     public String getC() {
         String os = System.getProperty("os.name");
         if (os.toLowerCase().startsWith("win")) {
@@ -50,8 +55,15 @@ public class GradleTools {
         return !os.toLowerCase().startsWith("win");
     }
 
+    /**
+     * 进入工程目录
+     * CD [/D] [drive:][path]
+     *
+     * @return
+     */
     public String getCD() {
         String os = System.getProperty("os.name");
+        System.out.println("LHD ------ getCD os = " + os);
         if (os.toLowerCase().startsWith("win")) {
             return String.format("cd /d %s && ", Constant.PROJECT_PATH);
         }
@@ -84,14 +96,16 @@ public class GradleTools {
 
         //1、clean
         ExecuteResult executeResult = execute(String.format(clean, modelName));//首先clean
-
+        System.out.println("LHD -----clean------" + executeResult.isSuccess() + "---------LHD");
         //2、debug,release.channel
         if (executeResult.isSuccess()) {//clean成功
             //打包apk
             if (type == PUBLISH_TYPE.DEBUG) {
                 executeResult = execute(String.format(assembleDebugAar, modelName));//然后打包aar
+                System.out.println("LHD -----DEBUG------" + executeResult.isSuccess() + "---------LHD");
             } else if (type == PUBLISH_TYPE.RELEASE) {
                 executeResult = execute(String.format(assembleReleaseAar, modelName));//然后打包aar
+                System.out.println("LHD -----RELEASE------" + executeResult.isSuccess() + "---------LHD");
             } else {
 
             }
@@ -135,7 +149,7 @@ public class GradleTools {
     public ExecuteResult execute(String command) {
         try {
             if (processStatus.get(Thread.currentThread().getId()) < 0) {
-
+                System.out.println("LHD -----clean------用户取消 command = " + command + "---------LHD");
                 return new ExecuteResult(1, "用户取消", "用户取消");
             }
             Process process = null;
@@ -146,6 +160,13 @@ public class GradleTools {
             } else {
                 String cmd = getCommand() + " " + getC() + getCD() + getPlatformWithGradle() + command;
                 process = Runtime.getRuntime().exec(cmd);
+                System.out.println("LHD -- windows do command------getCommand = " + getCommand() +
+                        " getC() = " + getC() +
+                        " getCD() = " + getCD() +
+                        " getPlatformWithGradle() = " + getPlatformWithGradle() +
+                        " command= " + command +
+                        "--LHD");
+                System.out.println("LHD -----clean------ 最终命令 = " + cmd + "---------LHD");
             }
             if (executeListener != null) {
 //                executeListener.onExecute("\nExecute Full Command \n: [" + cmd+ "]\n");
@@ -173,7 +194,7 @@ public class GradleTools {
             StringBuffer sb = new StringBuffer();
 
             LineNumberReader reader = new LineNumberReader(ir);
-
+            System.out.println("LHD -----readStream 读取线程输出 = executeListener = " + executeListener + "---------LHD");
             Thread execThread = new Thread() {
                 @Override
                 public void run() {
@@ -182,6 +203,7 @@ public class GradleTools {
                         String line;
                         while ((line = reader.readLine()) != null) {
                             if (executeListener != null) {
+                                System.out.println("LHD -----读取线程输出 = " + line + "---------LHD");
                                 executeListener.onExecute(line);
                             }
 
@@ -238,15 +260,31 @@ public class GradleTools {
     }
 
     public static void main(String[] args) {
-//        Constant.setProjectPath("/Users/liutao/longzhu/MyApplication2");
         //D:\APPHELPER\MyApplication
         //E:\sina\FinanceAppAndroid\SinaFinance
-        Constant.setProjectPath("/Users/Administrator/IntelliJIDEAProjects/MyApplication");
+        //C:\Users\96314\IntelliJIDEAProjects\MyApplication
+        Constant.setProjectPath("C:/Users/96314/IntelliJIDEAProjects/MyApplication");
+
+        GradleTools.instance().setExecuteListener(new GradleTools.ExecuteListener() {
+            @Override
+            public void onExecuteStart() {
+            }
+
+            @Override
+            public void onExecute(String line) {
+                System.out.println("LHD -----line------" + line + "---------LHD");
+            }
+
+            @Override
+            public void onExecuteEnd() {
+            }
+        });
 
         ExecuteResult result = GradleTools.instance().deploy(PUBLISH_TYPE.DEBUG, "app", "测试");
-        System.out.println(result.getResult() + "");
-        System.out.println(result.getMsg() + "");
-        System.out.println(result.getErrorMsg() + "");
+//        System.out.println("LHD -----a------" + result.getResult() + "---------LHD");
+//        System.out.println("LHD -----b------" + result.getMsg() + "---------LHD");
+//        System.out.println("LHD -----c------" + result.getErrorMsg() + "---------LHD");
+
 //        Property property = new Property("demo", "1.0.2");
 //        PropertyUtil.replaceProperties(property);
     }

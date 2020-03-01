@@ -27,6 +27,8 @@ public class GradleTools {
     //存储每个线程的status -1 禁用，0 正常
     private Map<Long, Integer> processStatus = new HashMap<>();
 
+    private String stopBuildCommand;
+
     public String getPlatformWithGradle() {
         String os = System.getProperty("os.name");
         if (os.toLowerCase().startsWith("win")) {
@@ -128,7 +130,6 @@ public class GradleTools {
         } else {
             log("\n\n[---执行成功---]\n\n");
         }
-
         deployEnd();
         processStatus.put(Thread.currentThread().getId(), 0);
         return executeResult;
@@ -165,19 +166,12 @@ public class GradleTools {
             } else {
                 String cmd = getCommand() + " " + getC() + getCD() + getPlatformWithGradle() + command;
                 process = Runtime.getRuntime().exec(cmd);
-//                System.out.println("LHD -- windows do command------getCommand = " + getCommand() +
-//                        " getC() = " + getC() +
-//                        " getCD() = " + getCD() +
-//                        " getPlatformWithGradle() = " + getPlatformWithGradle() +
-//                        " command= " + command +
-//                        "--LHD");
-//                System.out.println("LHD -----clean------ 最终命令 = " + cmd + "---------LHD");
             }
+            System.out.println("LHD ------------- command = " + command);
             if (executeListener != null) {
-//                executeListener.onExecute("\nExecute Full Command \n: [" + cmd+ "]\n");
                 executeListener.onExecute("\nExecute Command \n: [" + command + "]\n");
             }
-
+            System.out.println("LHD  当前execute线程的id = " + Thread.currentThread().getId());
             processMap.put(Thread.currentThread().getId(), process);
             String msg = readStream(process.getInputStream(), executeListener);
             String error = readStream(process.getErrorStream(), executeListener);
@@ -197,31 +191,19 @@ public class GradleTools {
         try {
             InputStreamReader ir = new InputStreamReader(inputStream);
             StringBuffer sb = new StringBuffer();
-
             LineNumberReader reader = new LineNumberReader(ir);
-//            System.out.println("LHD -----readStream 读取线程输出 = executeListener = " + executeListener + "---------LHD");
-            Thread execThread = new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            if (executeListener != null) {
-                                executeListener.onExecute(line);
-                            }
-
-                            sb.append(line);
-                            sb.append("\n");
-                        }
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (processStatus.get(Thread.currentThread().getId()) < 0) {
+//                    log("\n\n[---用户取消---]\n\n");
+                    break;
                 }
-            };
-            execThread.start();
-//            execThread.join();
-
+                if (executeListener != null) {
+                    executeListener.onExecute(line);
+                }
+                sb.append(line);
+                sb.append("\n");
+            }
             return sb.toString();
         } catch (Exception e) {
             return e.getMessage();
@@ -238,8 +220,14 @@ public class GradleTools {
         processStatus.put(key, -1);
         Process process = processMap.get(key);
         if (process != null) {
+            System.out.println("LHD 中止一个线程 = " + key);
             process.destroy();
+            stopGradleBuild();
         }
+    }
+
+    private void stopGradleBuild() {
+        execute("--stop");
     }
 
     public void stopAll() {

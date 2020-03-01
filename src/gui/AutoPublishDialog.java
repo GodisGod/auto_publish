@@ -77,7 +77,8 @@ public class AutoPublishDialog {
                     publish("正式版本，日志测试");
                 } else {
                     if (isExecute) {
-                        GradleTools.instance().stopGradle(gradleKey);
+//                        GradleTools.instance().stopGradle(gradleKey);
+                        GradleTools.instance().stopAll();
                     }
                 }
             }
@@ -123,7 +124,7 @@ public class AutoPublishDialog {
         switchStatus(true);
         new Thread(() -> {
             gradleKey = Thread.currentThread().getId();
-            System.out.println("LHD  当前发布线程的id = " + gradleKey);
+            System.out.println("LHD  publish当前发布线程的id = " + gradleKey);
             ExecuteResult result = null;
             if (debugRadioButton.isSelected()) {
                 result = GradleTools.instance().deploy(GradleTools.PUBLISH_TYPE.DEBUG, "app", log);
